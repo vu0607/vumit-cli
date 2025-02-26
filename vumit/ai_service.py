@@ -15,23 +15,23 @@ class AIService:
         except Exception as e:
             raise Exception(f"Failed to initialize Gemini model: {str(e)}")
 
-    def analyze_code_changes(self, changes):
-        """Analyze code changes and provide recommendations"""
-        changes_summary = self._format_changes_for_prompt(changes)
+    def analyze_commits(self, commits):
+        """Analyze feature branch commits and provide recommendations"""
+        commits_summary = self._format_commits_for_prompt(commits)
 
-        prompt = f"""You are a code review expert. Analyze these code changes and provide feedback in JSON format.
+        prompt = f"""You are a code review expert. Analyze these feature branch commits and provide feedback in JSON format.
 
-Changes to analyze:
-{changes_summary}
+Commits to analyze:
+{commits_summary}
 
 Focus on:
-1. A brief summary of the changes
-2. Any potential issues or risks
+1. A brief summary of the changes in these commits
+2. Any potential issues or risks in the implementation
 3. Recommendations for improvement
 
 Respond ONLY with a JSON object in this exact format, no other text:
 {{
-    "summary": "Brief overview of changes",
+    "summary": "Brief overview of changes in the feature branch",
     "issues": ["List of potential issues"],
     "recommendations": ["List of recommendations"]
 }}"""
@@ -55,26 +55,26 @@ Respond ONLY with a JSON object in this exact format, no other text:
                 raise Exception("Could not extract valid JSON from response")
 
         except Exception as e:
-            raise Exception(f"Failed to analyze code changes: {str(e)}")
+            raise Exception(f"Failed to analyze commits: {str(e)}")
 
-    def generate_mr_description(self, changes, context):
-        """Generate a merge request description based on changes and context"""
-        changes_summary = self._format_changes_for_prompt(changes)
+    def generate_mr_description(self, commits, context):
+        """Generate a merge request description based on branch commits"""
+        commits_summary = self._format_commits_for_prompt(commits)
         context_summary = json.dumps(context, indent=2)
 
-        prompt = f"""You are a technical writer expert. Generate a merge request description for these code changes.
+        prompt = f"""You are a technical writer expert. Generate a merge request description for these feature branch commits.
 
 Repository Context:
 {context_summary}
 
-Changes to analyze:
-{changes_summary}
+Commits to analyze:
+{commits_summary}
 
 Generate a detailed merge request description following this exact format:
 
 1. What does this MR do and why?
 - Summarize the purpose and main goals
-- Explain what changes were made and why they were needed
+- Explain what changes were made and why
 - Mention any specific problems this MR solves
 
 2. References
@@ -132,13 +132,19 @@ Respond ONLY with a JSON object in this exact format, no other text:
         except Exception as e:
             raise Exception(f"Failed to generate merge request description: {str(e)}")
 
-    def _format_changes_for_prompt(self, changes):
-        """Format changes into a readable string for the prompt"""
+    def _format_commits_for_prompt(self, commits):
+        """Format commits into a readable string for the prompt"""
         formatted = []
-        for change in changes:
-            formatted.append(f"File: {change['file']}")
-            formatted.append(f"Status: {change['status']}")
+        for commit in commits:
+            formatted.append(f"Commit: {commit['hash']}")
+            formatted.append(f"Author: {commit['author']}")
+            formatted.append(f"Date: {commit['date']}")
+            formatted.append(f"Message: {commit['message']}")
             formatted.append("Changes:")
-            formatted.append(change['content'])
+            for change in commit['changes']:
+                formatted.append(f"  File: {change['file']}")
+                formatted.append(f"  Type: {change['change_type']}")
+                formatted.append("  Diff:")
+                formatted.append(change['diff'])
             formatted.append("-" * 40)
         return "\n".join(formatted)

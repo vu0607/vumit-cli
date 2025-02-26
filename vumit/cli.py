@@ -13,19 +13,19 @@ def cli():
 
 @cli.command()
 def check():
-    """Check code changes and get AI recommendations"""
+    """Check feature branch commits and get AI recommendations"""
     try:
         git_analyzer = GitAnalyzer()
         ai_service = AIService()
 
-        with console.status("Analyzing git changes..."):
-            changes = git_analyzer.get_uncommitted_changes()
-            if not changes:
-                console.print("[yellow]No changes found to analyze[/yellow]")
+        with console.status("Analyzing branch commits..."):
+            commits = git_analyzer.get_branch_commits()
+            if not commits:
+                console.print("[yellow]No commits found to analyze[/yellow]")
                 return
 
         with console.status("Getting AI recommendations..."):
-            analysis = ai_service.analyze_code_changes(changes)
+            analysis = ai_service.analyze_commits(commits)
 
         # Display results
         console.print(Panel.fit(
@@ -49,21 +49,21 @@ def check():
 
 @cli.command()
 def report():
-    """Generate merge request description based on changes"""
+    """Generate merge request description based on branch commits"""
     try:
         git_analyzer = GitAnalyzer()
         ai_service = AIService()
 
         with console.status("Analyzing repository context..."):
             context = git_analyzer.get_repository_context()
-            changes = git_analyzer.get_uncommitted_changes()
+            commits = git_analyzer.get_branch_commits()
 
-            if not changes:
-                console.print("[yellow]No changes found to generate report[/yellow]")
+            if not commits:
+                console.print("[yellow]No commits found to generate report[/yellow]")
                 return
 
         with console.status("Generating merge request description..."):
-            report = ai_service.generate_mr_description(changes, context)
+            report = ai_service.generate_mr_description(commits, context)
 
         # Display results in sections
         console.print("\n[bold blue]Merge Request Description[/bold blue]")
