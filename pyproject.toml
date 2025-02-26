@@ -1,0 +1,40 @@
+[project]
+name = "vumit"
+version = "0.1.0"
+description = "AI-powered Git analysis tool using Gemini AI"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1.8",
+    "gitpython>=3.1.44",
+    "google-generativeai>=0.8.4",
+    "hatchling>=1.27.0",
+    "rich>=13.9.4",
+]
+authors = [
+    {name = "Vumit Contributors"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["git", "ai", "merge-request", "code-review"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Version Control :: Git",
+]
+
+[project.urls]
+Documentation = "https://github.com/vumit/vumit#readme"
+Issues = "https://github.com/vumit/vumit/issues"
+
+[project.scripts]
+vumit = "vumit.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["vumit"]
