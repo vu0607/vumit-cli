@@ -7,7 +7,7 @@ Version: 0.1.0
 ## Installation
 
 ```bash
-pip install vumit-cli
+pip install -e .
 ```
 
 ## Configuration
@@ -34,13 +34,13 @@ Never commit your API key to version control or include it directly in your code
 
 1. Check code changes:
 ```bash
-vumit-cli check
+vumit check
 ```
 Analyzes uncommitted changes in your Git repository and provides AI-powered recommendations.
 
 2. Generate merge request description:
 ```bash
-vumit-cli report
+vumit report
 ```
 Generates a detailed merge request description based on your changes and repository context.
 
