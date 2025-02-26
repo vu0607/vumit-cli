@@ -2,7 +2,6 @@ import os
 from git import Repo
 from git.exc import InvalidGitRepositoryError
 
-
 class GitAnalyzer:
     def __init__(self):
         try:
@@ -10,14 +9,76 @@ class GitAnalyzer:
         except InvalidGitRepositoryError:
             raise Exception("Not a git repository")
 
-    def get_branch_commits(self):
-        """Get all commits in the current feature branch"""
+    def get_branch_commits(self, target_branch="dev"):
+        """Get all commits that are in the current branch but not in the target branch"""
         try:
             current_branch = self.repo.active_branch
-            commits = []
+            print(f"Current branch: {current_branch.name}")  # Debug log
 
-            # Get commits from the current branch
-            for commit in self.repo.iter_commits(current_branch.name):
+            # If we're on the target branch, there's nothing to compare
+            if current_branch.name == target_branch:
+                print(f"Currently on target branch {target_branch}, no commits to analyze")
+                return []
+
+            # Try to find the target branch in local and remote refs
+            target = None
+            potential_refs = [
+                target_branch,                    # Local branch
+                f"origin/{target_branch}",        # Remote branch
+                f"refs/remotes/origin/{target_branch}"  # Full remote ref
+            ]
+
+            print(f"Looking for target branch: {target_branch}")  # Debug log
+            for ref_name in potential_refs:
+                try:
+                    target = self.repo.refs[ref_name]
+                    print(f"Found target branch: {ref_name}")  # Debug log
+                    break
+                except (IndexError, KeyError):
+                    print(f"Target branch not found at: {ref_name}")  # Debug log
+                    continue
+
+            if not target:
+                # If target branch not found, try fallbacks
+                fallbacks = ['main', 'master', 'dev']  # Changed order to prioritize main
+                print("Trying fallback branches...")  # Debug log
+                for name in fallbacks:
+                    if name == target_branch:
+                        continue  # Skip if it's the same as target_branch
+                    try:
+                        target = self.repo.refs[name]
+                        print(f"Found fallback branch: {name}")  # Debug log
+                        break
+                    except (IndexError, KeyError):
+                        try:
+                            target = self.repo.refs[f"origin/{name}"]
+                            print(f"Found fallback branch: origin/{name}")  # Debug log
+                            break
+                        except (IndexError, KeyError):
+                            print(f"Fallback branch not found: {name}")  # Debug log
+                            continue
+
+            if not target:
+                print("No target branch found, using all commits in current branch")  # Debug log
+                commits_iter = self.repo.iter_commits(current_branch.name)
+            else:
+                try:
+                    # Use symmetric difference to get commits unique to current branch
+                    commits_iter = self.repo.iter_commits(f"{target.commit.hexsha}...{current_branch.commit.hexsha}")
+                    print(f"Comparing commits between {target.name} and {current_branch.name}")  # Debug log
+                except Exception as e:
+                    print(f"Error comparing branches: {e}")  # Debug log
+                    # Fallback: get recent commits from current branch
+                    commits_iter = self.repo.iter_commits(current_branch.name, max_count=10)
+
+            # Get commits that are in current branch but not in target branch
+            commits = []
+            for commit in commits_iter:
+                # Skip commits that are in the target branch
+                if target and commit in self.repo.iter_commits(target.name):
+                    print(f"Skipping commit {commit.hexsha[:7]} - present in target branch")  # Debug log
+                    continue
+
                 # Get the diff for this commit
                 diff_content = []
                 if commit.parents:
@@ -57,7 +118,9 @@ class GitAnalyzer:
                     "date": str(commit.committed_datetime),
                     "changes": diff_content
                 })
+                print(f"Found commit: {commit.hexsha[:7]} - {commit.message.strip()}")  # Debug log
 
+            print(f"Total commits found: {len(commits)}")  # Debug log
             return commits
 
         except Exception as e:
@@ -67,20 +130,18 @@ class GitAnalyzer:
         """Get relevant context about the repository"""
         try:
             current_branch = self.repo.active_branch.name
-            remote_url = next(
-                self.repo.remotes.origin.urls) if self.repo.remotes else None
+            remote_url = next(self.repo.remotes.origin.urls) if self.repo.remotes else None
 
             # Get the target branch (main/master)
             target_branch = None
             for ref in self.repo.refs:
-                if ref.name in ['origin/main', 'origin/master', 'main', 'master']:
+                if ref.name in ['origin/main', 'main', 'origin/master', 'master', 'origin/dev', 'dev']:
                     target_branch = ref.name
                     break
 
             return {
                 "current_branch": current_branch,
-                "target_branch": target_branch or "master",
-                # Default to master if no target found
+                "target_branch": target_branch or "main",  # Default to main if no target found
                 "remote_url": remote_url
             }
         except Exception as e:
