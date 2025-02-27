@@ -56,7 +56,7 @@ Generates a detailed merge request description based on your changes and reposit
 
 ## Requirements
 
-- Python 3.11 or higher
+- Python 3.9 or higher
 - Git repository
 - Google Gemini API key
 
