@@ -12,14 +12,15 @@ def cli():
     pass
 
 @cli.command()
-def check():
+@click.option('--target', default='dev', help='Target branch to compare against (default: dev)')
+def check(target):
     """Check feature branch commits and get AI recommendations"""
     try:
         git_analyzer = GitAnalyzer()
         ai_service = AIService()
 
         with console.status("Analyzing branch commits..."):
-            commits = git_analyzer.get_branch_commits()
+            commits = git_analyzer.get_branch_commits(target_branch=target)
             if not commits:
                 console.print("[yellow]No commits found to analyze[/yellow]")
                 return
@@ -48,7 +49,8 @@ def check():
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
 
 @cli.command()
-def report():
+@click.option('--target', default='dev', help='Target branch to compare against (default: dev)')
+def report(target):
     """Generate merge request description based on branch commits"""
     try:
         git_analyzer = GitAnalyzer()
@@ -56,7 +58,7 @@ def report():
 
         with console.status("Analyzing repository context..."):
             context = git_analyzer.get_repository_context()
-            commits = git_analyzer.get_branch_commits()
+            commits = git_analyzer.get_branch_commits(target_branch=target)
 
             if not commits:
                 console.print("[yellow]No commits found to generate report[/yellow]")

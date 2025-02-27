@@ -36,11 +36,21 @@ Never commit your API key to version control or include it directly in your code
 ```bash
 vumit check
 ```
-Analyzes uncommitted changes in your Git repository and provides AI-powered recommendations.
+or
+```bash
+vumit check --target <target-branch> # Default: dev
+```
+
+Analyzes diff commits (compared with target branch) in your Git repository and provides AI-powered recommendations.
 
 2. Generate merge request description:
 ```bash
 vumit report
+```
+or
+
+```bash
+vumit report --target <target-branch> # Default: dev
 ```
 Generates a detailed merge request description based on your changes and repository context.
 
